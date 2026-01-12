@@ -1,4 +1,4 @@
-# DualNav-Online-Planning-for-Zero-Shot-Robot-Navigation
+# DualNav：Online Planning for Zero Shot Robot Navigation
 
 ## Introduction
 We present DualNav, a zero-shot mapless navigation framework that enables mobile robots to follow natural language instructions in unknown and unstructured environments, without relying on pre-existing maps. The system is built upon an asynchronous parallel architecture that integrates (i) vision-language perception and active memory, (ii) dual-frequency closed-loop control, (iii) orientation-constrained local planning, and (iv) timestamp-based state synchronization into a unified framework.
