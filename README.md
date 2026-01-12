@@ -13,80 +13,92 @@ Performance & Generalization
 Extensive experiments in Gazebo and large-scale factory simulations demonstrate that DualNav achieves a navigation success rate of 86.7%, surpassing serial baselines by 33.4%, with a terminal positioning error of 0.091 m. The system also exhibits strong generalization in perceptually aliased and repetitive environments, validating its applicability in real-world unstructured settings.
 
 ## Installation
-The project was tested with Ubuntu 20.04 and ROS Noetic. We assume that you have already installed ROS Noetic and CUDA (if using GPU acceleration for local perception, though this project relies heavily on API calls).
+The project was tested with Ubuntu 20.04 and Jetson Orin/Xavier NX. We assume that you have already installed the necessary dependencies such as CUDA, ROS Noetic, and Conda.
 
-1. Create a ROS Workspace & Clone
-Set up a catkin workspace and clone the repository into the source directory.
+**1. Clone the Code**
+```bash
+git clone --depth 1 git@github.com:Your-Repo/Mapless-Nav-VLM.git
+```
 
-Bash
+**2. Create Virtual Environment**
 
-mkdir -p ~/mapless_nav_ws/src
-cd ~/mapless_nav_ws/src
-# Replace <your-repo-url> with your actual repository URL
-git clone git@github.com:YourUsername/Mapless-Nav-VLM.git
-2. Environment Setup
-We recommend using Conda to manage Python dependencies to avoid conflicts with the system Python, but you must ensure rospkg is installed to interface with ROS.
+I specified the libraries used in the provided scripts to ensure VLM and visual processing compatibility.
+```bash
+conda create --name mapless_nav python=3.8
+conda activate mapless_nav
+cd Mapless-Nav-VLM
+# Install dependencies required by PerceptionModule and NavigationModule
+pip install numpy opencv-python openai scikit-learn matplotlib rospkg
+```
 
-Bash
+**3. Build Workspace**
 
-conda create --name vlm_nav python=3.8
-conda activate vlm_nav
-
-# Install necessary Python libraries
-# We utilize sklearn for DBSCAN clustering and OpenAI for VLM interaction
-pip install numpy opencv-python matplotlib scikit-learn openai rospkg pyyaml
-Note: If you encounter cv_bridge issues with Python 3 in ROS Noetic within Conda, you may need to build cv_bridge from source or use the system python (/usr/bin/python3) instead of Conda.
-
-3. Install System Dependencies
-Install the required ROS navigation and simulation packages used in the code (MoveBase, Gazebo, TF2).
-
-Bash
-
-sudo apt-get update
-sudo apt-get install ros-noetic-navigation \
-                     ros-noetic-move-base \
-                     ros-noetic-gazebo-msgs \
-                     ros-noetic-tf2-ros \
-                     ros-noetic-cv-bridge \
-                     ros-noetic-image-transport
-4. Build and Configure
-Make the Python scripts executable and build the workspace.
-
-Bash
-
-# Grant execution permissions to the scripts
-cd ~/mapless_nav_ws/src/Mapless-Nav-VLM/src/
-chmod +x *.py
-
-# Build the workspace
-cd ~/mapless_nav_ws
+Build the ROS workspace to ensure message types and packages are recognized.
+```bash
+conda deactivate
+# Assuming the cloned repo is inside a catkin workspace src folder
+cd ../.. 
 catkin_make
 source devel/setup.bash
-5. Configuration (API Key)
-The system uses the Qwen-VL model via the DashScope (Aliyun) compatible OpenAI API. You must configure your API key.
+```
 
-Open test_ctrl.py.
+## Test the System
 
-Locate the initialization of the controller:
+You can test the navigation logic using the provided Python scripts. Note that the system relies on the Qwen-VL API for semantic understanding.
 
-Python
+**1. Start the Simulator**
 
-self.api_key = "sk-..." # Replace this with your actual API Key
-self.base_url = "https://dashscope.aliyuncs.com/compatible-mode/v1"
-Ensure your robot (simulation or real) is publishing to the following topics defined in PerceptionModule and NavigationModule:
+The controller supports `turtlebot3_waffle` and standard Gazebo environments. Ensure you have the simulation running before starting the controller.
+```bash
+# Terminal 1
+source devel/setup.bash
+export TURTLEBOT3_MODEL=waffle
+roslaunch turtlebot3_gazebo turtlebot3_world.launch
+```
 
-/camera/rgb/image_raw
+**2. Configure API Key**
 
-/camera/depth/image_raw
+Before running the main controller, you must set your DashScope/OpenAI API key in `test_ctrl.py`.
+```python
+# Open test_ctrl.py and modify the following line:
+self.api_key = "sk-your-actual-api-key-here" 
+```
 
-/camera/depth/camera_info
+**3. Start the Main Controller**
 
-/scan (Lidar)
+This script initializes the `PerceptionModule` and `NavigationModule` and handles the VLM interaction loop.
+```bash
+# Terminal 2
+cd Mapless-Nav-VLM/src
+conda activate mapless_nav
+# Grant execution permissions
+chmod +x *.py
+python test_ctrl.py
+```
 
-/odom
+**4. Visualization**
 
-/cmd_vel
+Start RVIZ to visualize the global path planning, debug markers, and navigation goals.
+```bash
+# Terminal 3
+# You may need to add the topics /local_global_debug_path and /local_global_debug_markers manually in RVIZ
+rviz
+```
 
+The system will visualize the A* path and debug markers on the topics `/local_global_debug_path` and `/local_global_debug_markers`.
+
+You can interact with the system via the terminal menu to trigger scanning or navigation tasks:
+```text
+************************************************************
+Please select an operation:
+  1. Execute navigation task
+  2. Continue recording new targets
+  3. View recorded targets
+  4. Clear invalid targets (No 3D position)
+  5. View statistics
+  6. Exit
+************************************************************
+```
 ## Experimental
 
 
