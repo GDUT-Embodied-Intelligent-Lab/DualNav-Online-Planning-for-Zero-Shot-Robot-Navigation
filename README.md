@@ -99,6 +99,6 @@ Please select an operation:
   6. Exit
 ************************************************************
 ```
-## Experimental
+## Experiment
 
 
